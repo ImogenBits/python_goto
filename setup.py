@@ -5,4 +5,5 @@ setup(
     packages = ["control_flow"],
     python_requires = ">=3.7",
     include_package_data = True,
+    package_dir={"": "src"}
 )
