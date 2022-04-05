@@ -1,8 +1,8 @@
 from setuptools import setup
 from setuptools.command.build_py import build_py
 from setuptools.command.develop import develop
-from os.path import join, dirname
-from os import symlink, remove
+from os.path import join, dirname, exists
+from os import symlink
 
 class build_with_pth(build_py):
     def run(self):
@@ -12,11 +12,9 @@ class build_with_pth(build_py):
 
 class develop_with_pth(develop):
     def run(self):
-        if self.uninstall:
-            remove(join(self.install_dir, "control_flow.pth"))
         super().run()
-        if not self.uninstall:
-            out = join(self.install_dir, "control_flow.pth")
+        out = join(self.install_dir, "control_flow.pth")
+        if not exists(out):
             symlink(join(dirname(__file__), "control_flow.pth"), out)
 
 setup(
