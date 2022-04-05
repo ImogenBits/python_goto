@@ -1,4 +1,2 @@
-"test"
-
 
 print(1)

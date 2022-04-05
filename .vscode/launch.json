@@ -8,7 +8,7 @@
             "name": "Python: run.py",
             "type": "python",
             "request": "launch",
-            "module": "run",
+            "module": "debug",
             "console": "internalConsole",
         }
     ]
