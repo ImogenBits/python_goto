@@ -8,8 +8,7 @@ class build_with_pth(build_py):
     def run(self):
         super().run()
         out = join(self.build_lib, "control_flow.pth")
-        if not self.uninstall:
-            self.copy_file("control_flow.pth", out, preserve_mode=0)
+        self.copy_file("control_flow.pth", out, preserve_mode=0)
         
 
 class develop_with_pth(develop):
