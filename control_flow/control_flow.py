@@ -8,7 +8,7 @@ import os
 import types
 from typing import Sequence
 
-find_pattern = re.compile(r"(?:^|\n)\s*(import control_flow|from control flow import label, goto)")
+find_pattern = re.compile(r"(?:^|\n)\s*(import control_flow|from control_flow import label, goto)")
 
 class Finder(MetaPathFinder):
 

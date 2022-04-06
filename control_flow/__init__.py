@@ -1,6 +1,6 @@
 from control_flow.control_flow import activate
 
-goto: None
-label: None
+goto = 0
+label = 0
 
 activate()
