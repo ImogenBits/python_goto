@@ -8,7 +8,7 @@ import os
 import types
 from typing import Sequence
 
-find_pattern = re.compile(r"(?:^|\n)\s*(import control_flow|from __past__ import goto)")
+find_pattern = re.compile(r"(?:^|\n)\s*(import control_flow|from __past__ import goto)($|\n)")
 
 class Finder(MetaPathFinder):
 
@@ -89,7 +89,7 @@ class ControlFlowLoader(Loader):
                     source[i] = f"{m[1]}__CONTROL_FLOW_CURR_LABEL__ = {labels[m[2]]}\n{m[1]}continue"
             
             out = "\n".join(source)
-            print(out)
+            #print(out)
             return compile(out, self._filename, "exec")
 
     def exec_module(self, module: types.ModuleType) -> None:
