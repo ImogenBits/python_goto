@@ -85,15 +85,6 @@ class ControlFlowLoader(Loader):
 
             exec(compile("\n".join(source), "test", "exec"), module.__dict__)
 
-    @classmethod
-    def get_code(cls, fullname):
-        return None
-
-    @classmethod
-    def get_source(cls, fullname):
-        return None
-
-
 
 activated = False
 
