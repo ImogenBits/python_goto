@@ -1,7 +1,9 @@
-import time
-import control_flow
-import re
-import control_flow
+from control_flow import label, goto
+i = 0
+end = 3
 
-
-print(1)
+label start:
+    print(i)
+    i += 1
+    if i != end:
+        goto start

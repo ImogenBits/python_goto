@@ -8,7 +8,7 @@ import os
 import types
 from typing import Sequence
 
-regex = re.compile(r"(?:^|\n)\s*(import control_flow| from control flow import label, goto)")
+find_pattern = re.compile(r"(?:^|\n)\s*(import control_flow|from control flow import label, goto)")
 
 class Finder(MetaPathFinder):
 
@@ -41,11 +41,14 @@ class Finder(MetaPathFinder):
             if os.path.exists(filename):
                 with open(filename, "rb") as f:
                     source = decode_source(f.read())
-                    if regex.search(source) is not None:
+                    if find_pattern.search(source) is not None:
                         return spec_from_file_location(fullname, filename, loader=ControlFlowLoader(filename))
                 return None
         return None
 
+
+label_re = re.compile(r"^(\s*)label (\w+):$")
+goto_re = re.compile(r"^(\s*)goto (\w+)$")
 
 class ControlFlowLoader(Loader):
     def __init__(self, filename):
@@ -56,9 +59,31 @@ class ControlFlowLoader(Loader):
     
     def exec_module(self, module: types.ModuleType) -> None:
         with open(self._filename, "rb") as f:
-            source = decode_source(f.read())
-            source = regex.sub("\nprint(123)", source)
-            exec(compile(source, "test", "exec"), module.__dict__)
+            source = decode_source(f.read()).split("\n")
+
+            if len(source) != 0 and not label_re.match(source[0]):
+                for i, line in enumerate(source):
+                    if label_re.match(line):
+                        break
+                    source[i] = "    " + line
+                source.insert(0, "label __CONTROL_FLOW_START_LABEL__:")
+
+            source = ["__CONTROL_FLOW_CURR_LABEL__: int = 0", "while True:"] + ["    " + line for line in  source] + ["    break"]
+            labels = {}
+            curr_label = 0
+            for i, line in enumerate(source):
+                m = label_re.match(line)
+                if m is not None:
+                    labels[m[2]] = curr_label
+                    source[i] = f"{m[1]}if __CONTROL_FLOW_CURR_LABEL__ <= {curr_label}:"
+                    curr_label += 1
+
+            for i, line in enumerate(source):
+                m = goto_re.match(line)
+                if m is not None:
+                    source[i] = f"{m[1]}__CONTROL_FLOW_CURR_LABEL__ = {labels[m[2]]}\n{m[1]}continue"
+
+            exec(compile("\n".join(source), "test", "exec"), module.__dict__)
 
     @classmethod
     def get_code(cls, fullname):
