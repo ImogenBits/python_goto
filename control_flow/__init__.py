@@ -1,1 +1,3 @@
-import control_flow.control_flow
+from control_flow.control_flow import activate
+
+activate()
