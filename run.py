@@ -1,4 +1,5 @@
-from control_flow import label, goto
+from __past__ import goto
+
 i = 0
 end = 3
 

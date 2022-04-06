@@ -8,7 +8,7 @@ import os
 import types
 from typing import Sequence
 
-find_pattern = re.compile(r"(?:^|\n)\s*(import control_flow|from control_flow import label, goto)")
+find_pattern = re.compile(r"(?:^|\n)\s*(import control_flow|from __past__ import goto)")
 
 class Finder(MetaPathFinder):
 
@@ -42,7 +42,7 @@ class Finder(MetaPathFinder):
                 with open(filename, "rb") as f:
                     source = decode_source(f.read())
                     if find_pattern.search(source) is not None:
-                        return spec_from_file_location(fullname, filename, loader=ControlFlowLoader(filename))
+                        return spec_from_file_location(fullname, filename, loader=ControlFlowLoader(fullname, filename))
                 return None
         return None
 
@@ -51,13 +51,16 @@ label_re = re.compile(r"^(\s*)label (\w+):$")
 goto_re = re.compile(r"^(\s*)goto (\w+)$")
 
 class ControlFlowLoader(Loader):
-    def __init__(self, filename):
+    fullnames = {}
+
+    def __init__(self, fullname, filename):
         self._filename = filename
+        self.fullnames[fullname] = self
     
     def create_module(self, spec: ModuleSpec) -> types.ModuleType | None:
         return None
     
-    def exec_module(self, module: types.ModuleType) -> None:
+    def _parse_module(self):
         with open(self._filename, "rb") as f:
             source = decode_source(f.read()).split("\n")
 
@@ -68,7 +71,9 @@ class ControlFlowLoader(Loader):
                     source[i] = "    " + line
                 source.insert(0, "label __CONTROL_FLOW_START_LABEL__:")
 
-            source = ["__CONTROL_FLOW_CURR_LABEL__: int = 0", "while True:"] + ["    " + line for line in  source] + ["    break"]
+            source = (["__CONTROL_FLOW_CURR_LABEL__: int = 0", "while True:"]
+                    + ["    " + line for line in  source if not find_pattern.match(line)]
+                    + ["    break"])
             labels = {}
             curr_label = 0
             for i, line in enumerate(source):
@@ -82,9 +87,24 @@ class ControlFlowLoader(Loader):
                 m = goto_re.match(line)
                 if m is not None:
                     source[i] = f"{m[1]}__CONTROL_FLOW_CURR_LABEL__ = {labels[m[2]]}\n{m[1]}continue"
+            
+            out = "\n".join(source)
+            print(out)
+            return compile(out, self._filename, "exec")
 
-            exec(compile("\n".join(source), "test", "exec"), module.__dict__)
+    def exec_module(self, module: types.ModuleType) -> None:
+            code = self._parse_module()
+            exec(code, module.__dict__)
 
+    @classmethod
+    def get_code(cls, fullname):
+        if fullname in cls.fullnames:
+            return cls.fullnames[fullname]._parse_module()
+        return None
+
+    @classmethod
+    def get_source(cls, fullname):
+        return None
 
 activated = False
 
